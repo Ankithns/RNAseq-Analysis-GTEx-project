@@ -1,0 +1,82 @@
+---
+title: "New_limma"
+author: "Sai Ankith"
+date: "4/21/2019"
+output: html_document
+---
+```{r}
+library(edgeR)
+library(limma)
+library(Glimma)
+
+#read in count table
+countsm <- read.delim("Snipped_KidneyLiver.txt", row.names=1) 
+
+#turn count table into matrix
+counts <- data.matrix(countsm) 
+head(counts)
+
+
+#Create DGEList object
+d0 <- DGEList(counts, remove.zeros=FALSE)
+
+#Calculate normalization factors
+d0 <- calcNormFactors(d0) 
+
+#filter low expressed genes
+cutoff <- 1 
+drop <- which(apply(cpm(d0), 1, max) < cutoff)
+d <- d0[-drop,] 
+
+#number of genes left
+dim(d) 
+
+#sample names
+snames <- colnames(counts) 
+snames
+
+#combines samples that are the same cell type
+group <- substr(snames, 1, nchar(snames) - 1) 
+
+#plot MDS
+plotMDS(d, col = as.numeric(group)) 
+
+condition<-c("groupGTEX.11DXY.0526.SM.5EGG","groupGTEX.11DXZ.0126.SM.5EGG")
+
+#Specify the model to be fitted
+mm <- model.matrix(~0 + condition) 
+
+#Voom function
+y <- voom(d, plot = T) 
+
+#lmFit fits a linear model using weighted least squares for each gene
+fit <- lmFit(y)  
+
+head(coef(fit))
+summary(fit)
+```
+
+
+```{r}
+
+#Differentially expressed genes between Liver  and Kidney Tissues
+contr <- makeContrasts(conditiongroupGTEX.11DXY.0526.SM.5EGG - conditiongroupGTEX.11DXZ.0126.SM.5EGG,levels = mm) 
+
+contr
+
+#Estimate contrast for each gene
+tmp <- contrasts.fit(fit, contr) 
+
+#Empirical Bayes smoothing of standard errors
+tmp <- eBayes(tmp) 
+
+#What genes are most differentially expressed?
+top.table <- topTable(tmp, sort.by = "P", n = Inf) 
+
+#top 20 differentially expressed genes
+head(top.table, 20) 
+
+#How many DE genes are there?
+length(which(top.table$adj.P.Val < 0.05)) 
+top.table$Gene <- rownames(top.table)
+top.table <- top.table[,c("Gene", names(top.table)[1:6])]

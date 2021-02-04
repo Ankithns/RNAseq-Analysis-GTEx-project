@@ -1,0 +1,41 @@
+---
+title: "DESeq_Kidney vs Liver"
+author: "Sai_Ankith"
+date: "4/21/2019"
+output: html_document
+---
+
+```{r}
+library(DESeq2)
+library(ggplot2)
+
+###load counts 
+counts_mus <- read.table("Snipped_Kidney.tsv",sep='\t',header=TRUE,row.names = 1)
+counts_adi <- read.table("Snipped_Liver.tsv",sep='\t',header=TRUE,row.names = 1)
+
+###make a big matrix with both Adipose and Muscle counts (merging is easier as a data frame)
+counts_all <- merge(counts_adi,counts_mus,by="row.names",all=TRUE)
+counts_all <- as.matrix(counts_all,row.names=1)
+
+##the following two lines just make the first column into rownames
+counts_all2 <- counts_all[,-1]
+rownames(counts_all2) <- counts_all[,1]
+
+##make it into a numeric matrix
+counts_all2 <- matrix(as.numeric(unlist(counts_all2)),nrow=nrow(counts_all2))
+
+####load metadata and rename column
+coldata_all <- read.table("Metadata_KidneyLiver.tsv",sep='\t',row.names = 1)
+colnames(coldata_all)<-c("type")
+
+
+###check 
+all(rownames(coldata_all) %in% colnames(counts_all2))
+all(rownames(coldata_all) == colnames(counts_all2))
+
+
+###find DE genes 
+dds <- DESeqDataSetFromMatrix(countData = counts_all2,colData = coldata_all,design = ~ type)
+dds <- DESeq(dds)
+```
+
