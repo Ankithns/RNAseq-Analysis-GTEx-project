@@ -1,5 +1,5 @@
 # RNAseq-Analysis-GTEx-project
-RNAseq analysis using Differential packages using DeSeq2 and Limma.
+RNAseq analysis using Differential packages - DeSeq2 and Limma.
 
 GTEx project ia a puiblic repository that aims to study tissue-specific gene expression and expression. Samples are collected from Non-diseased individuals across 54 tissue sites. 
 
